@@ -1,0 +1,2 @@
+/home/arelin/Projects/OrientationDrive-master/app/build/intermediates/classes/debug
+/home/arelin/Projects/OrientationDrive-master/app/build/intermediates/pre-dexed/debug/RobotLibrary-5782f61ec15283fa8c5677c1a944a1f73f934474.jar

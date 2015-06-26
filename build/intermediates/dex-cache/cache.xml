@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<items version="2" >
+
+    <item
+        jar="/home/arelin/Projects/ButtonDrive/app/libs/RobotLibrary.jar"
+        jumboMode="false"
+        revision="22.0.1"
+        sha1="31c82e5e9535de3e1b78f7c14342c13f2cdc59ee">
+        <dex dex="/home/arelin/Projects/ButtonDrive/app/build/intermediates/pre-dexed/debug/RobotLibrary-5f8052cfdbb2a31ceac627381d47bb001c33f670.jar" />
+    </item>
+    <item
+        jar="/home/arelin/Projects/OrientationDrive-master/app/libs/RobotLibrary.jar"
+        jumboMode="false"
+        revision="22.0.1"
+        sha1="31c82e5e9535de3e1b78f7c14342c13f2cdc59ee">
+        <dex dex="/home/arelin/Projects/OrientationDrive-master/app/build/intermediates/pre-dexed/debug/RobotLibrary-5782f61ec15283fa8c5677c1a944a1f73f934474.jar" />
+    </item>
+
+</items>
