@@ -24,20 +24,18 @@ public class ButtonDriveActivity extends Activity {
 
     public float heading;
     public float speed;
-    public float returnedSpeed;
-    public float returnedHeading;
-    public boolean buttonState = true;
-    /** The Sphero Connection View */
     private SpheroConnectionView mSpheroConnectionView;
 
-    /** Called when the activity is first created. */
     @Override
-    public void onCreate(Bundle savedInstanceState) {
-
+    protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
-        runTheListener R1 = new runTheListener();
-        R1.start();
+
+        sensorManager = (SensorManager)getSystemService(SENSOR_SERVICE);
+        accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        magnetometer = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
+
+        findViews();
         mSpheroConnectionView = (SpheroConnectionView) findViewById(R.id.sphero_connection_view);
         mSpheroConnectionView.addConnectionListener(new ConnectionListener() {
 
@@ -57,87 +55,36 @@ public class ButtonDriveActivity extends Activity {
                 mSpheroConnectionView.startDiscovery();
             }
         });
-
-
     }
 
+    private void findViews() {
+        azimuthTextView = (TextView) findViewById(R.id.azimuth);
+        pitchTextView = (TextView) findViewById(R.id.pitch);
+        rollTextView = (TextView) findViewById(R.id.roll);
+    }
 
-    TextView pitchTextView;
-    TextView rollTextView;
-    SensorManager sensorManager;
-    Sensor accelerometer;
-    Sensor magnetometer;
-    runTheListener run = new runTheListener();
-
-    /** Called when the user comes back to this app */
     @Override
     protected void onResume() {
         super.onResume();
-        // Refresh list of Spheros
-
-        mSpheroConnectionView.startDiscovery();
+        sensorManager.registerListener(sensorListener, accelerometer, SensorManager.SENSOR_DELAY_NORMAL);
+        sensorManager.registerListener(sensorListener, magnetometer, SensorManager.SENSOR_DELAY_NORMAL);
     }
 
-
-    /** Called when the user presses the back or home button */
     @Override
     protected void onPause() {
         super.onPause();
-        // Disconnect Robot properly
-        RobotProvider.getDefaultProvider().disconnectControlledRobots();
+        sensorManager.unregisterListener(sensorListener);
     }
 
-    /**
-     * When the user clicks "STOP", stop the Robot.
-     *
-     * @param v The View that had been clicked
-     */
-    public void onStopClick(View v) {
-        if (mRobot != null) {
-            // Stop robot
-            buttonState = false;
-            mRobot.stop();
-        }
-    }
+    TextView azimuthTextView;
+    TextView pitchTextView;
+    TextView rollTextView;
 
-    /**
-     * When the user clicks a control button, roll the Robot in that direction
-     *
-     * @param v The View that had been clicked
-     */
+    SensorManager sensorManager;
+    SensorListener sensorListener = new SensorListener();
+    Sensor accelerometer;
+    Sensor magnetometer;
 
-    public void onControlClick(View v) {
-        // Find the heading, based on which button was clicked
-
-        switch (v.getId()) {
-            case R.id.go_button:
-                    while(buttonState) {
-                        setSphero(returnedHeading, returnedSpeed, 500);
-                    }
-                break;
-
-            default:
-                setSphero(1f, 0f, 10000);
-                buttonState = true;
-                break;
-        }
-
-
-    }
-    public void setSphero(float heading, float speed, int milliSeconds)
-    {
-        final float direction = heading;
-        final int time = milliSeconds;
-        final float velocity = speed;
-        mRobot.drive(direction, velocity);
-        try {
-            Thread.sleep(time);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-            // handle the exception...
-            // For example consider calling Thread.currentThread().interrupt(); here.
-        }
-    }
     class SensorListener implements SensorEventListener {
 
         @Override
@@ -148,8 +95,6 @@ public class ButtonDriveActivity extends Activity {
 
         @Override
         public void onSensorChanged(SensorEvent event) {
-
-
             float[] rotationMatrixR = new float[9];
             float[] rotationMatrixI = new float[9];
             float[] orientation = new float[3];
@@ -162,12 +107,13 @@ public class ButtonDriveActivity extends Activity {
             boolean success =  SensorManager.getRotationMatrix(rotationMatrixR, rotationMatrixI, gravity, geomagnetic);
             if (success) {
                 sensorManager.getOrientation(rotationMatrixR, orientation);
-
+                float azimuthAngle = orientation[0];
                 float pitchAngle = orientation[1];
                 float rollAngle = orientation[2];
+                double azimuthDegrees = Math.toDegrees(azimuthAngle);
+                double pitchDegrees = Math.toDegrees(pitchAngle);
+                double rollDegrees = Math.toDegrees(rollAngle);
 
-                float pitchDegrees = (float)Math.toDegrees(pitchAngle);
-                float rollDegrees = (float)Math.toDegrees(rollAngle);
                 if (Math.abs(rollDegrees) > Math.abs(pitchDegrees))
                 {
                     if(rollDegrees > 0f)
@@ -181,6 +127,9 @@ public class ButtonDriveActivity extends Activity {
                     speed = getValue(rollDegrees);
                     pitchTextView.setText(Double.toString(pitchDegrees));
                     rollTextView.setText(Double.toString(rollDegrees));
+                    if (mRobot != null) {
+                        mRobot.drive(heading, speed);
+                    }
 
                 }
 
@@ -197,55 +146,32 @@ public class ButtonDriveActivity extends Activity {
                     speed = getValue(pitchDegrees);
                     pitchTextView.setText(Double.toString(pitchDegrees));
                     rollTextView.setText(Double.toString(rollDegrees));
+                    if (mRobot != null) {
+                        mRobot.drive(heading, speed);
+                    }
 
                 }
 
             }
         }
-        public float getValue (float angleValue)
-        {
-            try {
-                return Math.abs(angleValue/360f);
-            } catch (ArithmeticException e) {
-                return 0f;
-            }
-        }
-        public float returnHeading()
-        {
-            return heading;
-        }
-        public float returnSpeed()
-        {
-            return speed;
-        }
+        public float getValue (double angleValue)
+       {
 
-    }
-    public class runTheListener implements Runnable
-    {
-        private Thread t;
-        @Override
-        public void run() {
-            SensorListener sensorListener;
-            sensorListener = new SensorListener();
-            while(true) {
-                returnedSpeed = sensorListener.returnSpeed();
-                returnedHeading = sensorListener.returnHeading();
-            }
-        }
-        public void start ()
-        {
-            sensorManager = (SensorManager)getSystemService(SENSOR_SERVICE);
-            accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-            magnetometer = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
-            if (t == null)
-            {
-                t = new Thread (this);
-                t.start();
-            }
+         try {
 
+            return (float)Math.abs(angleValue/360f);
+         } catch (ArithmeticException e) {
+            return 0f;
+          }
+     }
+
+
+
+
+
+
+            }
         }
-    }
-}
 
 
 

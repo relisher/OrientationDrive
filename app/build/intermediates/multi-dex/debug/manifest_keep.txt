@@ -1,0 +1,11 @@
+-keep class null {
+    <init>();
+    void attachBaseContext(android.content.Context);
+}
+-keep class com.orbotix.sample.buttondrive.ButtonDriveActivity { <init>(); }
+-keep public class * extends android.app.backup.BackupAgent {
+    <init>();
+}
+-keep public class * extends java.lang.annotation.Annotation {
+    *;
+}
